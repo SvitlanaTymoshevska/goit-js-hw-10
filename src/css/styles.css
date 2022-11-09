@@ -45,5 +45,6 @@ img {
 }
 
 .country-info-name {
-  font-weight: bold;
+  margin: 8px 0;
+  font-size: 16px;
 }

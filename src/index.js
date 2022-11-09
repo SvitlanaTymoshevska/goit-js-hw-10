@@ -1,5 +1,5 @@
 import './css/styles.css';
-import fetchCountries from './fetchCountries';
+import { fetchCountries } from './fetchCountries';
 import debounce from 'lodash.debounce';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
@@ -14,6 +14,7 @@ refs.searchQuery.addEventListener('input', debounce(onInput, DEBOUNCE_DELAY));
 
 function onInput(e) { 
     e.preventDefault();
+
     const queryValue = e.target.value.trim();
 
     if (queryValue === '') {
@@ -23,26 +24,29 @@ function onInput(e) {
     
     fetchCountries(queryValue)
         .then(countres => {
-        const countriesNumber = countres.length;
+            const countriesNumber = countres.length;
 
-        if (countriesNumber === 1) {
-            refs.countryList.innerHTML = makeCountryInfo(countres[0]);
-        } else if (countriesNumber > 1 && countriesNumber <= 10) {
-            clearCountryListInfo();
-            refs.countryList.insertAdjacentHTML('beforeend', countres.map(makeCountryList).join(''));
-        } else if (countriesNumber > 10) { 
-            clearCountryListInfo();
-            Notify.info('Too many matches found. Please enter a more specific name.');
-        }   
+            if (countriesNumber === 1) {
+                refs.countryList.innerHTML = makeCountryInfo(countres[0]);
+            } else if (countriesNumber > 1 && countriesNumber <= 10) {
+                clearCountryListInfo();
+                refs.countryList.insertAdjacentHTML('beforeend', countres.map(makeCountryList).join(''));
+            } else if (countriesNumber > 10) { 
+                clearCountryListInfo();
+                Notify.info('Too many matches found. Please enter a more specific name.');
+            }   
         })
-        .catch(onFetchError());
+        .catch(error => { 
+            clearCountryListInfo();
+            Notify.failure(error);
+        });
 }
 
 function makeCountryList ({ name, flags }) {
   const itemsEl = `<li class = "country-info-item"> 
                         <img
                             src=${flags.svg} 
-                            alt= "Flag of ${name.common}"> 
+                            alt= "${name.common} flag"> 
                         <p>${name.common}</p>
                      </li>`;
   
@@ -51,19 +55,19 @@ function makeCountryList ({ name, flags }) {
 
 function makeCountryInfo({ flags, name, capital, population, languages }) {
     const itemsEl = `<div class = "country-info-item">
-                        <img src=${flags.svg} alt="Flag of ${name.common}">
+                        <img src=${flags.svg} alt="${name.common} flag">
                         <h1>${name.common}</h1>
                     </div>
                     <div class="country-info-item">
-                        <p class="country-info-name">Capital:</p>
+                        <h2 class="country-info-name">Capital:</h2>
                         <p>${capital}</p>
                     </div>
                     <div class="country-info-item">
-                        <p class="country-info-name">Population:</p>
+                        <h2 class="country-info-name">Population:</h2>
                         <p>${population}</p>
                     </div>
                     <div class="country-info-item">
-                        <p class="country-info-name">Languages:</p>
+                        <h2 class="country-info-name">Languages:</h2>
                         <p>${Object.values(languages).join(', ')}</p>
                     </div>
                     </div>`;
@@ -73,8 +77,4 @@ function makeCountryInfo({ flags, name, capital, population, languages }) {
 function clearCountryListInfo () {
     refs.countryList.innerHTML = '';
     refs.countryInfo.innerHTML = '';
-}
-
-function onFetchError() { 
-    Notify.failure('Oops, there is no country with that name');
 }
